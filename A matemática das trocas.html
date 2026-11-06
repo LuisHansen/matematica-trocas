@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A matemática das trocas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Troca Aí tokens. Regra de cor: terracota = atrito (troca direta, p², os 9); oliva = fluxo (ciclos, os 110); o resto neutro. */
+  --bg:#f5ead8;
+  --surface:#fff6ea;
+  --surface-2:#f4ebd3;
+  --border:#e7d3a9;
+  --track:#eadbc0;
+  --ink:#201e1d;
+  --muted:#82796a;
+  --terra:#c67139;
+  --terra-700:#8c491a;
+  --terra-300:#ffc6a5;
+  --terra-200:#ffe1d0;
+  --terra-100:#fff2eb;
+  --olive:#7a8a5e;
+  --olive-700:#56633f;
+  --olive-300:#ccdbb2;
+  --olive-200:#e1eecc;
+  --olive-100:#f0fae1;
+  --sand-300:#e7d3a9;
+  --radius-lg:28px;--radius-md:16px;--radius-sm:8px;
+  --shadow-sm:0 1px 2px rgba(46,43,37,.12);
+  --font-heading:"Caprasimo",system-ui,sans-serif;
+  --font-body:"Figtree",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;font-size:17px;overflow-x:hidden}
+main{max-width:760px;margin:0 auto;padding:52px 20px 88px;display:grid;gap:72px;position:relative}
+h1,h2{font-family:var(--font-heading);font-weight:400;text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(36px,5.5vw,52px)}
+h2{font-size:27px}
+p{margin:0;max-width:62ch}
+.lead{color:var(--muted);font-size:19px}
+.eyebrow{display:inline-flex;align-items:center;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface-2);color:var(--muted);border-radius:999px;padding:6px 14px;width:max-content}
+section{display:grid;gap:22px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px;box-shadow:var(--shadow-sm)}
+.row{display:flex;gap:18px;flex-wrap:wrap}
+.row>*{flex:1 1 240px}
+.num{font-family:var(--font-heading);font-weight:400;font-variant-numeric:tabular-nums}
+.big{font-size:48px;line-height:1}
+.formula{font-family:var(--font-heading);font-size:24px;font-variant-numeric:tabular-nums}
+.formula sup{font-size:.6em}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.terra{color:var(--terra-700)}
+.olive{color:var(--olive-700)}
+svg{max-width:100%;height:auto;display:block}
+.diagram{margin:0 auto}
+
+/* key-number chips: filled, one per role */
+.tag{display:inline-block;border-radius:var(--radius-sm);padding:2px 10px;font-family:var(--font-heading);color:#fff}
+.tag.terra{background:var(--terra);color:#fff}
+.tag.olive{background:var(--olive);color:#fff}
+
+/* dot grids */
+.grids{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media (max-width:480px){.grids{grid-template-columns:1fr}}
+.grid-card{display:grid;gap:12px;align-content:start}
+.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;aspect-ratio:1}
+.dots i{display:block;border-radius:50%;background:var(--track);aspect-ratio:1;transition:background .25s}
+.dots i.on{background:var(--olive)}
+.dots.barter i.on{background:var(--terra)}
+.slider{display:grid;gap:8px}
+.slider label{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--ink);height:28px}
+input[type=range]:focus-visible{outline:2px solid var(--terra);outline-offset:4px;border-radius:6px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:520px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;display:grid;gap:4px;box-shadow:var(--shadow-sm)}
+.stat .label{color:var(--muted);font-size:14px;font-weight:500}
+.stat.terra{background:var(--terra-200);border-color:var(--terra-300);color:var(--terra-700)}
+.stat.terra .label{color:var(--terra-700);opacity:.8}
+.stat.olive{background:var(--olive-200);border-color:var(--olive-300);color:var(--olive-700)}
+.stat.olive .label{color:var(--olive-700);opacity:.8}
+
+/* steps */
+.steps{display:grid;gap:14px}
+.step{display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:center}
+.step .n{width:36px;height:36px;border-radius:50%;background:var(--surface-2);color:var(--muted);display:grid;place-items:center;font-family:var(--font-heading)}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:12px 8px;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right;color:var(--muted)}
+td.k{font-family:var(--font-heading);font-size:20px}
+.bar{position:relative;height:30px;background:var(--track);border-radius:999px;overflow:hidden;min-width:150px}
+.bar b{position:absolute;inset:0 auto 0 0;background:var(--olive);border-radius:999px}
+.bar.terra b{background:var(--terra)}
+.bar span{position:relative;z-index:1;display:block;line-height:30px;padding-left:12px;font-family:var(--font-heading);font-size:16px}
+.tablewrap{overflow-x:auto}
+
+/* takeaways, colored by role */
+.callout{border-radius:0 var(--radius-md) var(--radius-md) 0;padding:14px 18px;font-weight:500}
+.callout.terra{background:var(--terra-100);border-left:4px solid var(--terra)}
+.callout.olive{background:var(--olive-100);border-left:4px solid var(--olive)}
+footer{color:var(--muted);font-size:14px;max-width:62ch}
+footer a{color:var(--terra-700)}
+
+/* soft orbs like the welcome screen */
+.orb{position:absolute;z-index:-1;border-radius:50%;filter:blur(36px);pointer-events:none;opacity:.6}
+.o1{width:340px;height:340px;background:#e6c8ab;top:-150px;right:-150px}
+.o2{width:300px;height:300px;background:#cfd6bf;top:80px;left:-190px}
+@media (prefers-reduced-motion:reduce){.dots i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<span class="orb o1"></span><span class="orb o2"></span>
+
+<header style="display:grid;gap:14px">
+  <h1>Por que trocar é tão mais difícil do que vender?</h1>
+  <p class="lead">A matemática por trás de um site de escambo, e o que os números do Xcambo revelam.</p>
+</header>
+
+<!-- 1. troca direta -->
+<section>
+  <span class="eyebrow">01 · Troca direta · 2 pessoas</span>
+  <h2>Para uma troca acontecer, os dois têm que querer</h2>
+
+  <div class="card">
+    <svg class="diagram" viewBox="0 0 520 180" width="520" role="img" aria-label="Ana quer o item de Beto e Beto quer o item de Ana">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#c67139"/>
+        </marker>
+      </defs>
+      <g font-family="Figtree,sans-serif" font-size="16" font-weight="600" fill="#201e1d" text-anchor="middle">
+        <circle cx="90" cy="90" r="46" fill="#f4ebd3"/>
+        <text x="90" y="86">Ana</text>
+        <text x="90" y="106" font-size="12" font-weight="500" fill="#82796a">tem um livro</text>
+        <circle cx="430" cy="90" r="46" fill="#f4ebd3"/>
+        <text x="430" y="86">Beto</text>
+        <text x="430" y="106" font-size="12" font-weight="500" fill="#82796a">tem um jogo</text>
+      </g>
+      <path d="M142 66 L380 66" stroke="#c67139" stroke-width="3" stroke-linecap="round" marker-end="url(#arr)" fill="none"/>
+      <path d="M378 114 L140 114" stroke="#c67139" stroke-width="3" stroke-linecap="round" marker-end="url(#arr)" fill="none"/>
+      <g font-family="Figtree,sans-serif" font-size="14" font-weight="600" text-anchor="middle">
+        <rect x="150" y="34" width="220" height="24" rx="12" fill="#ffe1d0"/>
+        <text x="260" y="51" fill="#8c491a">Ana quer o jogo · chance p</text>
+        <rect x="150" y="124" width="220" height="24" rx="12" fill="#ffe1d0"/>
+        <text x="260" y="141" fill="#8c491a">Beto quer o livro · chance p</text>
+      </g>
+    </svg>
+    <p style="text-align:center;margin-top:16px" class="formula">chance da troca = p × p = <span class="tag terra">p<sup>2</sup></span></p>
+  </div>
+
+  <div class="card" style="display:grid;gap:22px;background:var(--surface-2)">
+    <div class="slider">
+      <label for="p"><span>Chance de alguém gostar de um item qualquer</span><span class="num" style="font-size:22px;color:var(--ink)" id="pLabel">10%</span></label>
+      <input type="range" id="p" min="5" max="30" step="1" value="10">
+    </div>
+    <div class="grids">
+      <div class="grid-card">
+        <div><strong class="olive">Vender</strong> <span class="muted small">· basta 1 lado querer</span></div>
+        <div class="dots" id="dotsMoney" aria-hidden="true"></div>
+        <div><span class="num big olive" id="moneyVal">10</span> <span class="muted">em 100</span></div>
+      </div>
+      <div class="grid-card">
+        <div><strong class="terra">Trocar</strong> <span class="muted small">· os 2 lados têm que querer</span></div>
+        <div class="dots barter" id="dotsBarter" aria-hidden="true"></div>
+        <div><span class="num big terra" id="barterVal">1</span> <span class="muted">em 100</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="callout terra">Elevar ao quadrado é brutal: com 10% de interesse, só 1 em cada 100 pares dá match.</p>
+</section>
+
+<!-- 2. ciclos -->
+<section>
+  <span class="eyebrow">02 · Trocas em ciclo · 3 pessoas</span>
+  <h2>E se ninguém precisar querer de volta?</h2>
+  <p class="muted">Ana dá para Beto, Beto dá para Carla, Carla dá para Ana. Todo mundo recebe o que quer, sem nenhum par precisar coincidir.</p>
+
+  <div class="card">
+    <svg class="diagram" viewBox="0 0 520 310" width="520" role="img" aria-label="Ciclo: Ana quer de Beto, Beto quer de Carla, Carla quer de Ana">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7a8a5e"/>
+        </marker>
+      </defs>
+      <path d="M296 70 L398 208" stroke="#7a8a5e" stroke-width="3" stroke-linecap="round" marker-end="url(#arr2)" fill="none"/>
+      <path d="M372 252 L148 252" stroke="#7a8a5e" stroke-width="3" stroke-linecap="round" marker-end="url(#arr2)" fill="none"/>
+      <path d="M122 208 L224 70" stroke="#7a8a5e" stroke-width="3" stroke-linecap="round" marker-end="url(#arr2)" fill="none"/>
+      <g font-family="Figtree,sans-serif" font-size="16" font-weight="600" fill="#201e1d" text-anchor="middle">
+        <circle cx="260" cy="52" r="42" fill="#f4ebd3"/>
+        <text x="260" y="48">Ana</text>
+        <text x="260" y="66" font-size="12" font-weight="500" fill="#82796a">livro</text>
+        <circle cx="420" cy="252" r="42" fill="#f4ebd3"/>
+        <text x="420" y="248">Beto</text>
+        <text x="420" y="266" font-size="12" font-weight="500" fill="#82796a">jogo</text>
+        <circle cx="100" cy="252" r="42" fill="#f4ebd3"/>
+        <text x="100" y="248">Carla</text>
+        <text x="100" y="266" font-size="12" font-weight="500" fill="#82796a">tênis</text>
+      </g>
+      <g font-family="Figtree,sans-serif" font-size="13" font-weight="600" fill="#56633f" text-anchor="middle">
+        <rect x="376" y="118" width="74" height="22" rx="11" fill="#e1eecc"/>
+        <text x="413" y="134">quer · p</text>
+        <rect x="223" y="226" width="74" height="22" rx="11" fill="#e1eecc"/>
+        <text x="260" y="242">quer · p</text>
+        <rect x="70" y="118" width="74" height="22" rx="11" fill="#e1eecc"/>
+        <text x="107" y="134">quer · p</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="row">
+    <div class="card" style="display:grid;gap:8px">
+      <span class="muted small" style="font-weight:600">Chance de cada ciclo fechar</span>
+      <span class="formula">p × p × p = <span class="tag olive">p<sup>3</sup></span></span>
+      <span class="muted small">Menor que p². Até aqui, parece pior.</span>
+    </div>
+    <div class="card" style="display:grid;gap:8px">
+      <span class="muted small" style="font-weight:600">Ciclos possíveis entre N itens</span>
+      <span class="formula">N(N−1)(N−2) ÷ 3</span>
+      <span class="muted small">Contra N(N−1) ÷ 2 pares. Cresce muito mais rápido.</span>
+    </div>
+  </div>
+  <p class="callout olive">Cada ciclo é mais raro, mas existem tantos ciclos a mais que, no total, aparecem mais trocas. Quanto maior o site, mais isso vale.</p>
+</section>
+
+<!-- 3. dados -->
+<section>
+  <span class="eyebrow">03 · Os dados do Xcambo</span>
+  <h2>O que a página inicial do site diz hoje</h2>
+  <div class="stats">
+    <div class="stat"><span class="num big">150</span><span class="label">usuários</span></div>
+    <div class="stat"><span class="num big">66</span><span class="label">itens anunciados</span></div>
+    <div class="stat terra"><span class="num big">9</span><span class="label">trocas realizadas</span></div>
+  </div>
+
+  <div class="card steps">
+    <div class="step"><span class="n">1</span><span>Só quem anunciou algo pode trocar. O universo é <strong>N = 66 itens</strong>, não 150 pessoas.</span></div>
+    <div class="step"><span class="n">2</span><span>66 itens formam <strong class="num">66 × 65 ÷ 2 = 2.145</strong> pares possíveis.</span></div>
+    <div class="step"><span class="n">3</span><span>9 trocas em 2.145 pares → p² ≈ 0,42% → <span class="tag terra">p ≈ 6,5%</span></span></div>
+    <div class="step"><span class="n">4</span><span>Cada pessoa gosta de mais ou menos <strong>1 a cada 15 itens</strong>. É um número normal. O problema não é o interesse, é o quadrado.</span></div>
+  </div>
+  <p class="callout terra">Com esse p, um item novo tem só <strong>24%</strong> de chance de encontrar um par direto. Três em cada quatro anúncios nunca trocam.</p>
+</section>
+
+<!-- 4. tabela -->
+<section>
+  <span class="eyebrow">04 · Aplicando a matemática</span>
+  <h2>Quantas trocas existem no Xcambo, se o site permitisse ciclos?</h2>
+  <p class="muted">Mesmos 66 itens, mesmo p de 6,5%. Para um ciclo de k pessoas: <span class="num" style="color:var(--ink);font-size:18px">N!/(N−k)! ÷ k × p<sup>k</sup></span></p>
+
+  <div class="card tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Pessoas</th>
+          <th class="r">Ciclos possíveis</th>
+          <th class="r">Chance de cada</th>
+          <th>Trocas esperadas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="k terra">2 <span class="muted small" style="font-family:var(--font-body)">direta</span></td>
+          <td class="r num">2.145</td>
+          <td class="r num">0,42%</td>
+          <td><div class="bar terra"><b style="width:6%"></b><span>9</span></div></td>
+        </tr>
+        <tr>
+          <td class="k olive">3</td>
+          <td class="r num">91.520</td>
+          <td class="r num">0,027%</td>
+          <td><div class="bar"><b style="width:12%"></b><span>25</span></div></td>
+        </tr>
+        <tr>
+          <td class="k olive">4</td>
+          <td class="r num">2.883.880</td>
+          <td class="r num">0,0018%</td>
+          <td><div class="bar"><b style="width:31%"></b><span>76</span></div></td>
+        </tr>
+        <tr>
+          <td class="k olive">5</td>
+          <td class="r num">143.057.280</td>
+          <td class="r num">0,00011%</td>
+          <td><div class="bar"><b style="width:100%"></b><span>245</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row">
+    <div class="stat terra">
+      <span class="label">Só troca direta</span>
+      <span class="num big">9</span>
+      <span class="label">trocas, o que o Xcambo tem</span>
+    </div>
+    <div class="stat olive">
+      <span class="label">Ciclos de até 4 pessoas</span>
+      <span class="num big">110</span>
+      <span class="label">trocas possíveis, com os mesmos itens</span>
+    </div>
+  </div>
+  <p class="callout olive">Os ciclos compartilham itens, então nem todos acontecem ao mesmo tempo. Mas o teto sai de 9 e vai para perto do total de itens.</p>
+</section>
+
+<footer>
+  Modelo: interesses independentes, mesma chance p para todo item, um item por pessoa. Números do Xcambo lidos em <a href="https://www.xcambo.com.br/">xcambo.com.br</a> em novembro de 2026.
+</footer>
+
+</main>
+
+<script>
+(function(){
+  var slider=document.getElementById('p');
+  var pLabel=document.getElementById('pLabel');
+  var money=document.getElementById('dotsMoney');
+  var barter=document.getElementById('dotsBarter');
+  var moneyVal=document.getElementById('moneyVal');
+  var barterVal=document.getElementById('barterVal');
+  for(var i=0;i<100;i++){money.appendChild(document.createElement('i'));barter.appendChild(document.createElement('i'));}
+  function paint(grid,n){
+    var dots=grid.children;
+    for(var i=0;i<100;i++){dots[i].className=i<n?'on':'';}
+  }
+  function update(){
+    var p=parseInt(slider.value,10);
+    var sq=Math.round(p*p/100);
+    pLabel.textContent=p+'%';
+    moneyVal.textContent=p;
+    barterVal.textContent=sq;
+    paint(money,p);
+    paint(barter,sq);
+  }
+  slider.addEventListener('input',update);
+  update();
+})();
+</script>
+</body>
+</html>
